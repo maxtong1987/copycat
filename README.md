@@ -19,45 +19,49 @@ import "gitlab.com/maxtong/copycat"
 package main
 
 import (
-    "fmt"
-    "gitlab.com/maxtong/copycat"
+	"fmt"
+
+	"gitlab.com/maxtong/copycat"
 )
 
 type subType struct {
-    X string
-    Y bool
-    Z int
+	X string
+	Y bool
+	Z int
 }
 
 type srcType struct {
-    A string
-    B int32
-    C float64
-    D []uint64
-    E subType
+	A string
+	B int32
+	C float64
+	D []uint64
+	E subType
 }
 
 type destType struct {
-    A string
-    B int64
-    C float32
-    d []uint64
-    E *subType
+	A string
+	B int64
+	C float32
+	d []uint64
+	E *subType
+}
+
+func (d *destType) String() string {
+	return fmt.Sprintf("A:%s B:%v C:%v d:%v E:%+v", d.A, d.B, d.C, d.d, *d.E)
 }
 
 func main() {
-    src := srcType{
-        A: "a",
-        B: 123,
-        C: 0.0122,
-        D: []uint64{6,7,8,9}
-        E: subType{X: "x", Y: true, Z: 100}
-    }
-    dst := &destType{}
-    copycat.DeepCopy(dst, src)
-    fmt.Printf("dst:%+v", *dst)
+	src := srcType{
+		A: "a",
+		B: 123,
+		C: 0.0122,
+		D: []uint64{6, 7, 8, 9},
+		E: subType{X: "x", Y: true, Z: 100},
+	}
+	dst := &destType{}
+	copycat.DeepCopy(dst, src)
+	fmt.Print(dst)
 }
-
 ```
 
 ## Expected Behavior
