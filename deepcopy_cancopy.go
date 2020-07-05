@@ -2,15 +2,7 @@ package copycat
 
 import "reflect"
 
-func canCopy(args *deepCopyArgs) bool {
-	if args == nil {
-		return false
-	}
-
-	d := args.d
-	s := args.s
-	flags := args.flags
-
+func canCopy(d reflect.Value, s reflect.Value) bool {
 	if !d.IsValid() || !s.IsValid() || !d.CanSet() {
 		return false
 	}
@@ -18,20 +10,7 @@ func canCopy(args *deepCopyArgs) bool {
 	dk := d.Kind()
 	sk := s.Kind()
 	if dk == sk {
-		switch dk {
-		case reflect.Chan:
-			return flags.Has(FCopyChan)
-		case reflect.Func:
-			return flags.Has(FCopyFunc)
-		case reflect.Ptr:
-			return flags.Has(FCopyPtr)
-		case reflect.Uintptr:
-			return flags.Has(FCopyUintptr)
-		case reflect.UnsafePointer:
-			return flags.Has(FCopyUnsafePointer)
-		default:
-			return true
-		}
+		return true
 	}
 	if isInt(dk) && isInt(sk) {
 		return true

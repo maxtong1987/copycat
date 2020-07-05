@@ -1,17 +1,21 @@
 package copycat
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type deepCopyArgs struct {
-	d     reflect.Value
-	s     reflect.Value
-	flags Flags
-	level uint
+	d       reflect.Value
+	s       reflect.Value
+	flags   Flags
+	level   uint
+	visited *map[uintptr]reflect.Value
 }
 
-func (args *deepCopyArgs) indirect() *deepCopyArgs {
-	args.d = indirect(args.d, true)
-	args.s = indirect(args.s, false)
+func (args *deepCopyArgs) resolve() *deepCopyArgs {
+	flags := args.flags
+	args.d = resolveDst(args.d, flags)
+	args.s = resolveSrc(args.s, flags)
 	return args
 }
 
@@ -21,14 +25,43 @@ func (args *deepCopyArgs) next() *deepCopyArgs {
 	return &nextArgs
 }
 
-func indirect(v reflect.Value, isDst bool) reflect.Value {
+func (args *deepCopyArgs) recordVisited() {
+	s := args.s
+	d := args.d
+	flags := args.flags
+	visited := *args.visited
+	if !flags.Has(FPreserveHierarchy) || !s.CanAddr() {
+		return
+	}
+	addr := s.UnsafeAddr()
+	visited[addr] = d
+}
+
+func resolveDst(v reflect.Value, flags Flags) reflect.Value {
 	switch v.Kind() {
-	case reflect.Ptr, reflect.Interface:
-		if isDst && v.IsNil() {
+	case reflect.Ptr:
+		if v.IsValid() && v.IsNil() {
 			ptr := reflect.New(v.Type().Elem())
 			v.Set(ptr)
 		}
-		return indirect(v.Elem(), isDst)
+		return resolveDst(v.Elem(), flags)
+	case reflect.Interface:
+		// if v.IsValid() && v.IsNil() {
+		// 	ptr := reflect.New(v.Type().Elem())
+		// 	v.Set(ptr)
+		// }
+		return resolveDst(v.Elem(), flags)
+	default:
+		return v
+	}
+}
+
+func resolveSrc(v reflect.Value, flags Flags) reflect.Value {
+	switch k := v.Kind(); k {
+	case reflect.Ptr:
+		return resolveSrc(v.Elem(), flags)
+	case reflect.Interface:
+		return resolveSrc(v.Elem(), flags)
 	default:
 		return v
 	}

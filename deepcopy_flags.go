@@ -8,21 +8,16 @@ const (
 	// FPreserveHierarchy preserve pointer hierarchy
 	FPreserveHierarchy Flags = 1 << iota
 
-	// FCopyChan copy from source's channel to destination's channel
+	// FCopyChan shallow copy Chan type
 	FCopyChan
 
-	// FCopyPtr copy pointer
-	FCopyPtr
-
-	// FCopyFunc copy function
+	// FCopyFunc shallow copy Func type
 	FCopyFunc
 
-	//reflect.Ptr, reflect.Uintptr, reflect.Chan, reflect.Func, reflect.UnsafePointer:
-
-	// FCopyUintptr copy Uintptr
+	// FCopyUintptr shallow copy Uintptr type
 	FCopyUintptr
 
-	// FCopyUnsafePointer copy UnsafePointer
+	// FCopyUnsafePointer shallow copy UnsafePointer type
 	FCopyUnsafePointer
 )
 

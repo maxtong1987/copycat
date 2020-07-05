@@ -31,22 +31,32 @@ import (
 // Doesn't support: cannel, function and unsafe pointer
 func DeepCopy(dst interface{}, src interface{}, flags ...Flags) {
 	args := deepCopyArgs{
-		d:     reflect.ValueOf(dst),
-		s:     reflect.ValueOf(src),
-		flags: combineFlags(flags...),
-		level: 0,
+		d:       reflect.ValueOf(dst),
+		s:       reflect.ValueOf(src),
+		flags:   combineFlags(flags...),
+		level:   0,
+		visited: &map[uintptr]reflect.Value{},
 	}
 	deepCopy(&args)
 }
 
 func deepCopy(args *deepCopyArgs) {
 
-	args.indirect()
+	args.resolve()
 	d := args.d
 	s := args.s
+	flags := args.flags
 
-	if !canCopy(args) {
+	if !canCopy(d, s) {
 		return
+	}
+
+	if s.CanAddr() && flags.Has(FPreserveHierarchy) {
+		addr := s.UnsafeAddr()
+		if value, ok := (*args.visited)[addr]; ok {
+			d.Set(value)
+			return
+		}
 	}
 
 	switch k := d.Kind(); k {
@@ -81,24 +91,49 @@ func deepCopy(args *deepCopyArgs) {
 	case reflect.Slice:
 		sliceHandler(args)
 
-	case reflect.Ptr, reflect.Uintptr, reflect.Chan, reflect.Func, reflect.UnsafePointer:
-		d.Set(s)
+	case reflect.Chan:
+		if flags.Has(FCopyChan) {
+			d.Set(s)
+		}
 
-	default:
+	case reflect.Func:
+		if flags.Has(FCopyFunc) {
+			d.Set(s)
+		}
+
+	case reflect.Uintptr:
+		if flags.Has(FCopyUintptr) {
+			d.Set(s)
+		}
+
+	case reflect.UnsafePointer:
+		if flags.Has(FCopyUnsafePointer) {
+			d.Set(s)
+		}
+
+	default: // Invalid, Interface, Ptr
 		panic(fmt.Sprintf("unhandled type: %s", k))
 	}
+
+	args.recordVisited()
 }
 
 func structHandler(args *deepCopyArgs) {
 	d := args.d
 	s := args.s
 	t := d.Type()
-	num := t.NumField()
-	for i := 0; i < num; i++ {
+	for i, num := 0, t.NumField(); i < num; i++ {
 		f := t.Field(i)
 		nextArgs := args.next()
 		nextArgs.d = d.Field(i)
 		nextArgs.s = s.FieldByName(f.Name)
+		deepCopy(nextArgs)
+	}
+	for i, num := 0, t.NumMethod(); i < num; i++ {
+		m := t.Method(i)
+		nextArgs := args.next()
+		nextArgs.d = d.Method(i)
+		nextArgs.s = s.MethodByName(m.Name)
 		deepCopy(nextArgs)
 	}
 }
@@ -122,27 +157,29 @@ func sliceHandler(args *deepCopyArgs) {
 	d := args.d
 	s := args.s
 	t := d.Type()
-	arr := reflect.MakeSlice(t, s.Len(), s.Cap())
+	len := s.Len()
+	arr := reflect.MakeSlice(t, len, s.Cap())
 	d.Set(arr)
-	copyArr(args)
-}
-
-func arrayHandler(args *deepCopyArgs) {
-	copyArr(args)
-}
-
-func copyArr(args *deepCopyArgs) {
-	d := args.d
-	s := args.s
-	len := d.Len()
-	if len > s.Len() {
-		len = s.Len()
-	}
 	dk := d.Type().Elem().Kind()
 	sk := s.Type().Elem().Kind()
 	if dk == reflect.Uint8 && sk == reflect.Uint8 {
 		d.SetBytes(s.Bytes())
 		return
+	}
+	for i := 0; i < len; i++ {
+		nextArgs := args.next()
+		nextArgs.d = d.Index(i)
+		nextArgs.s = s.Index(i)
+		deepCopy(nextArgs)
+	}
+}
+
+func arrayHandler(args *deepCopyArgs) {
+	d := args.d
+	s := args.s
+	len := d.Len()
+	if len > s.Len() {
+		len = s.Len()
 	}
 	for i := 0; i < len; i++ {
 		nextArgs := args.next()
