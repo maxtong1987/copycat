@@ -26,13 +26,30 @@ import (
 	"reflect"
 )
 
+// Flags Bitmask for DeepCopy
+type Flags uint32
+
+const (
+	// FCopyChan true if copy from source's channel to destination's channel
+	FCopyChan Flags = 1 << iota
+	// FMapToStruct true if copy source's map to destination's struct
+	FMapToStruct
+)
+
+// Has check if f has flags
+func (f Flags) Has(in Flags) bool { return f&in != 0 }
+
 // DeepCopy recursively copies data from src to dst.
 // Doesn't support: cannel, function and unsafe pointer
-func DeepCopy(dst interface{}, src interface{}) {
-	deepCopy(reflect.ValueOf(dst), reflect.ValueOf(src))
+func DeepCopy(dst interface{}, src interface{}, flags ...Flags) {
+	var flagsCombined Flags
+	for _, f := range flags {
+		flagsCombined |= f
+	}
+	deepCopy(reflect.ValueOf(dst), reflect.ValueOf(src), flagsCombined)
 }
 
-func deepCopy(dst reflect.Value, src reflect.Value) {
+func deepCopy(dst reflect.Value, src reflect.Value, flags Flags) {
 
 	d := indirect(dst, true)
 	s := indirect(src, false)
@@ -62,18 +79,21 @@ func deepCopy(dst reflect.Value, src reflect.Value) {
 		d.SetComplex(s.Complex())
 
 	case reflect.Struct:
-		structHandler(d, s)
+		structHandler(d, s, flags)
 
 	case reflect.Map:
-		mapHandler(d, s)
+		mapHandler(d, s, flags)
 
 	case reflect.Array:
-		arrayHandler(d, s)
+		arrayHandler(d, s, flags)
 
 	case reflect.Slice:
-		sliceHandler(d, s)
+		sliceHandler(d, s, flags)
 
-	default: // Chan, Func, UnsafePointer, Invalid ...
+	case reflect.Chan:
+		d.Set(s)
+
+	default: // Func, UnsafePointer ...
 		return
 	}
 }
@@ -91,48 +111,48 @@ func indirect(v reflect.Value, isDst bool) reflect.Value {
 	}
 }
 
-func structHandler(d reflect.Value, s reflect.Value) {
+func structHandler(d reflect.Value, s reflect.Value, flags Flags) {
 	t := d.Type()
 	num := t.NumField()
 	for i := 0; i < num; i++ {
 		f := t.Field(i)
 		df := d.Field(i)
 		sf := s.FieldByName(f.Name)
-		deepCopy(df, sf)
+		deepCopy(df, sf, flags)
 	}
 }
 
-func mapHandler(d reflect.Value, s reflect.Value) {
+func mapHandler(d reflect.Value, s reflect.Value, flags Flags) {
 	t := d.Type()
 	newMap := reflect.MakeMap(t)
 	d.Set(newMap)
 	for iter := s.MapRange(); iter.Next(); {
 		key := reflect.New(t.Key()).Elem()
 		value := reflect.New(t.Elem()).Elem()
-		deepCopy(key, iter.Key())
-		deepCopy(value, iter.Value())
+		deepCopy(key, iter.Key(), flags)
+		deepCopy(value, iter.Value(), flags)
 		d.SetMapIndex(key, value)
 	}
 }
 
-func sliceHandler(d reflect.Value, s reflect.Value) {
+func sliceHandler(d reflect.Value, s reflect.Value, flags Flags) {
 	t := d.Type()
 	arr := reflect.MakeSlice(t, s.Len(), s.Cap())
 	d.Set(arr)
-	copyArr(d, s)
+	copyArr(d, s, flags)
 }
 
-func arrayHandler(d reflect.Value, s reflect.Value) {
-	copyArr(d, s)
+func arrayHandler(d reflect.Value, s reflect.Value, flags Flags) {
+	copyArr(d, s, flags)
 }
 
-func copyArr(d reflect.Value, s reflect.Value) {
+func copyArr(d reflect.Value, s reflect.Value, flags Flags) {
 	len := d.Len()
 	if len > s.Len() {
 		len = s.Len()
 	}
 	for i := 0; i < len; i++ {
-		deepCopy(d.Index(i), s.Index(i))
+		deepCopy(d.Index(i), s.Index(i), flags)
 	}
 }
 
