@@ -45,12 +45,6 @@ func resolveDst(v reflect.Value, flags Flags) reflect.Value {
 			v.Set(ptr)
 		}
 		return resolveDst(v.Elem(), flags)
-	case reflect.Interface:
-		// if v.IsValid() && v.IsNil() {
-		// 	ptr := reflect.New(v.Type().Elem())
-		// 	v.Set(ptr)
-		// }
-		return resolveDst(v.Elem(), flags)
 	default:
 		return v
 	}

@@ -564,6 +564,7 @@ func testFlagsPreserveHierarchy(t *testing.T) {
 		Name     string
 		Children []*node
 	}
+
 	nodeA := &node{Name: "nodeA"}
 	nodeB := &node{Name: "nodeB"}
 	nodeC := &node{Name: "nodeC"}
@@ -653,25 +654,25 @@ func testSpecialType(t *testing.T) {
 			flags:       FCopyChan,
 		},
 		{
-			description: "FCopyFunc - Func",
+			description: "FCopyFunc",
 			expect:      specialType{Q: Q},
 			flags:       FCopyFunc,
 		},
 		{
-			description: "FCopyFunc - struct",
+			description: "FCopyInterface",
 			expect:      specialType{R: R},
-			flags:       FCopyFunc,
+			flags:       FCopyInterface,
 		},
-		// {
-		// 	description: "FCopyUnsafePointer",
-		// 	expect:      specialType{S: S},
-		// 	flags:       FCopyUnsafePointer,
-		// },
-		// {
-		// 	description: "FCopyUintptr | FCopyChan | FCopyFunc | FCopyUnsafePointer",
-		// 	expect:      specialType{O: O, P: P, Q: Q, R: R, S: S},
-		// 	flags:       FCopyUintptr | FCopyChan | FCopyFunc | FCopyUnsafePointer,
-		// },
+		{
+			description: "FCopyUnsafePointer",
+			expect:      specialType{S: S},
+			flags:       FCopyUnsafePointer,
+		},
+		{
+			description: "FCopyUintptr | FCopyChan | FCopyFunc | FCopyInterface | FCopyUnsafePointer",
+			expect:      specialType{O: O, P: P, Q: Q, R: R, S: S},
+			flags:       FCopyUintptr | FCopyChan | FCopyFunc | FCopyInterface | FCopyUnsafePointer,
+		},
 	}
 
 	for _, testCase := range cases {
@@ -679,7 +680,9 @@ func testSpecialType(t *testing.T) {
 		dst := &specialType{}
 		expect := testCase.expect
 		DeepCopy(dst, src, testCase.flags)
-		if !reflect.DeepEqual(*dst, expect) {
+		strDst := fmt.Sprintf("%+v", *dst)
+		strExpect := fmt.Sprintf("%+v", expect)
+		if !reflect.DeepEqual(*dst, expect) && strDst != strExpect {
 			t.Errorf("dst != expect\ndst:\n%+v\nexpected:\n%+v", *dst, expect)
 		}
 	}

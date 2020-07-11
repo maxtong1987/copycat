@@ -19,6 +19,9 @@ const (
 
 	// FCopyUnsafePointer shallow copy UnsafePointer type
 	FCopyUnsafePointer
+
+	// FCopyInterface shallow copy interface type
+	FCopyInterface
 )
 
 // Has check if f has flags

@@ -28,7 +28,6 @@ import (
 )
 
 // DeepCopy recursively copies data from src to dst.
-// Doesn't support: cannel, function and unsafe pointer
 func DeepCopy(dst interface{}, src interface{}, flags ...Flags) {
 	args := deepCopyArgs{
 		d:       reflect.ValueOf(dst),
@@ -111,7 +110,12 @@ func deepCopy(args *deepCopyArgs) {
 			d.Set(s)
 		}
 
-	default: // Invalid, Interface, Ptr
+	case reflect.Interface:
+		if flags.Has(FCopyInterface) {
+			d.Set(s)
+		}
+
+	default: // Invalid
 		panic(fmt.Sprintf("unhandled type: %s", k))
 	}
 

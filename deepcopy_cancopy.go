@@ -27,6 +27,9 @@ func canCopy(d reflect.Value, s reflect.Value) bool {
 	if isArrayOrSlice(dk) && isArrayOrSlice(sk) {
 		return true
 	}
+	if isInterfaceOrStruct(dk) && isInterfaceOrStruct(sk) {
+		return true
+	}
 	return false
 }
 
@@ -69,6 +72,15 @@ func isFloat(k reflect.Kind) bool {
 func isArrayOrSlice(k reflect.Kind) bool {
 	switch k {
 	case reflect.Array, reflect.Slice:
+		return true
+	default:
+		return false
+	}
+}
+
+func isInterfaceOrStruct(k reflect.Kind) bool {
+	switch k {
+	case reflect.Interface, reflect.Struct:
 		return true
 	default:
 		return false
