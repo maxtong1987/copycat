@@ -36,6 +36,36 @@ func TestDeepCopy(t *testing.T) {
 	testCombo(t)
 }
 
+func BenchmarkDeepCopy_simple(b *testing.B) {
+	src := newSimple()
+	newDst := func() interface{} { return &simple{} }
+	benchmarkDeepCopy(b, newDst, src)
+}
+
+func BenchmarkDeepCopy_advanceSlice(b *testing.B) {
+	src := newAdvanceSlice()
+	newDst := func() interface{} { return &advanceSlice{} }
+	benchmarkDeepCopy(b, newDst, src)
+}
+
+func BenchmarkDeepCopy_advanceArray(b *testing.B) {
+	src := newAdvanceArray()
+	newDst := func() interface{} { return &advanceArray{} }
+	benchmarkDeepCopy(b, newDst, src)
+}
+
+func benchmarkDeepCopy(
+	b *testing.B,
+	newDst func() interface{},
+	src interface{},
+	flags ...Flags,
+) {
+	for n := 0; n < b.N; n++ {
+		dst := newDst()
+		DeepCopy(dst, src, flags...)
+	}
+}
+
 type simple struct {
 	A string
 	B int8
@@ -49,6 +79,23 @@ type simple struct {
 	J float32
 	K float64
 	L bool
+}
+
+func newSimple() *simple {
+	return &simple{
+		A: A,
+		B: B,
+		C: C,
+		D: D,
+		E: E,
+		F: F,
+		G: G,
+		H: H,
+		I: I,
+		J: J,
+		K: K,
+		L: L,
+	}
 }
 
 type advanceSlice struct {
@@ -66,6 +113,23 @@ type advanceSlice struct {
 	L []bool
 }
 
+func newAdvanceSlice() *advanceSlice {
+	return &advanceSlice{
+		A: []string{A, A, A, A, A, A},
+		B: []int8{B, B, B, B, B, B},
+		C: []int16{C, C, C, C, C, C},
+		D: []int32{D, D, D, D, D, D},
+		E: []int64{E, E, E, E, E, E},
+		F: []uint8{F, F, F, F, F, F},
+		G: []uint16{G, G, G, G, G, G},
+		H: []uint32{H, H, H, H, H, H},
+		I: []uint64{I, I, I, I, I, I},
+		J: []float32{J, J, J, J, J, J},
+		K: []float64{K, K, K, K, K, K},
+		L: []bool{L, L, L, L, L, L},
+	}
+}
+
 type advanceArray struct {
 	A [2]string
 	B [2]int8
@@ -79,6 +143,23 @@ type advanceArray struct {
 	J [2]float32
 	K [2]float64
 	L [2]bool
+}
+
+func newAdvanceArray() *advanceArray {
+	return &advanceArray{
+		A: [2]string{A},
+		B: [2]int8{B},
+		C: [2]int16{C},
+		D: [2]int32{D},
+		E: [2]int64{E},
+		F: [2]uint8{F},
+		G: [2]uint16{G},
+		H: [2]uint32{H},
+		I: [2]uint64{I},
+		J: [2]float32{J},
+		K: [2]float64{K},
+		L: [2]bool{L},
+	}
 }
 
 type advancePointer struct {
@@ -168,20 +249,7 @@ var (
 
 func testSimple(t *testing.T) {
 
-	src := simple{
-		A: A,
-		B: B,
-		C: C,
-		D: D,
-		E: E,
-		F: F,
-		G: G,
-		H: H,
-		I: I,
-		J: J,
-		K: K,
-		L: L,
-	}
+	src := *newSimple()
 
 	dst := &simple{}
 
@@ -197,24 +265,11 @@ func testSimple(t *testing.T) {
 
 func testSlice(t *testing.T) {
 
-	src := advanceSlice{
-		A: []string{A},
-		B: []int8{B},
-		C: []int16{C},
-		D: []int32{D},
-		E: []int64{E},
-		F: []uint8{F},
-		G: []uint16{G},
-		H: []uint32{H},
-		I: []uint64{I},
-		J: []float32{J},
-		K: []float64{K},
-		L: []bool{L},
-	}
+	src := newAdvanceSlice()
 
 	dst := &advanceSlice{}
 
-	expect := src
+	expect := *src
 
 	fmt.Println("case: slice")
 	DeepCopy(dst, src)
@@ -378,21 +433,6 @@ func testSliceToArray(t *testing.T) {
 		L: []bool{L},
 	}
 
-	type advanceArray struct {
-		A [2]string
-		B [2]int8
-		C [2]int16
-		D [2]int32
-		E [2]int64
-		F [2]uint8
-		G [2]uint16
-		H [2]uint32
-		I [2]uint64
-		J [2]float32
-		K [2]float64
-		L [2]bool
-	}
-
 	expect := advanceArray{
 		A: [2]string{A},
 		B: [2]int8{B},
@@ -420,20 +460,7 @@ func testSliceToArray(t *testing.T) {
 
 func testArrayToSlice(t *testing.T) {
 
-	src := advanceArray{
-		A: [2]string{A},
-		B: [2]int8{B},
-		C: [2]int16{C},
-		D: [2]int32{D},
-		E: [2]int64{E},
-		F: [2]uint8{F},
-		G: [2]uint16{G},
-		H: [2]uint32{H},
-		I: [2]uint64{I},
-		J: [2]float32{J},
-		K: [2]float64{K},
-		L: [2]bool{L},
-	}
+	src := newAdvanceArray()
 
 	expect := advanceSlice{
 		A: []string{A, ""},
