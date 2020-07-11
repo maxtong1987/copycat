@@ -1,7 +1,7 @@
 package copycat
 
 // Flags Bitmask for DeepCopy
-type Flags uint32
+type Flags uint16
 
 const (
 
@@ -22,6 +22,9 @@ const (
 
 	// FCopyInterface shallow copy interface type
 	FCopyInterface
+
+	// FAll shallow copy all special types
+	FAll = ^Flags(0)
 )
 
 // Has check if f has flags
