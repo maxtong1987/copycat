@@ -50,11 +50,14 @@ func deepCopy(args *deepCopyArgs) error {
 		return nil
 	}
 
-	if s.CanAddr() && flags.Has(FPreserveHierarchy) {
-		addr := s.UnsafeAddr()
-		if value, ok := (*args.visited)[addr]; ok {
-			d.Set(value)
-			return nil
+	if flags.Has(FPreserveHierarchy) {
+		defer args.recordVisited()
+		if s.CanAddr() {
+			addr := s.UnsafeAddr()
+			if value, ok := (*args.visited)[addr]; ok {
+				d.Set(value)
+				return nil
+			}
 		}
 	}
 
@@ -79,16 +82,16 @@ func deepCopy(args *deepCopyArgs) error {
 		d.SetComplex(s.Complex())
 
 	case reflect.Struct:
-		structHandler(args)
+		return structHandler(args)
 
 	case reflect.Map:
-		mapHandler(args)
+		return mapHandler(args)
 
 	case reflect.Array:
-		arrayHandler(args)
+		return arrayHandler(args)
 
 	case reflect.Slice:
-		sliceHandler(args)
+		return sliceHandler(args)
 
 	case reflect.Chan:
 		if flags.Has(FCopyChan) {
@@ -119,12 +122,10 @@ func deepCopy(args *deepCopyArgs) error {
 		return fmt.Errorf("unhandled type: %s", k)
 	}
 
-	args.recordVisited()
-
 	return nil
 }
 
-func structHandler(args *deepCopyArgs) {
+func structHandler(args *deepCopyArgs) error {
 	d := args.d
 	s := args.s
 	t := d.Type()
@@ -133,18 +134,23 @@ func structHandler(args *deepCopyArgs) {
 		nextArgs := args.next()
 		nextArgs.d = d.Field(i)
 		nextArgs.s = s.FieldByName(f.Name)
-		deepCopy(nextArgs)
+		if err := deepCopy(nextArgs); err != nil {
+			return err
+		}
 	}
 	for i, num := 0, t.NumMethod(); i < num; i++ {
 		m := t.Method(i)
 		nextArgs := args.next()
 		nextArgs.d = d.Method(i)
 		nextArgs.s = s.MethodByName(m.Name)
-		deepCopy(nextArgs)
+		if err := deepCopy(nextArgs); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func mapHandler(args *deepCopyArgs) {
+func mapHandler(args *deepCopyArgs) error {
 	d := args.d
 	s := args.s
 	t := d.Type()
@@ -154,12 +160,15 @@ func mapHandler(args *deepCopyArgs) {
 		nextArgs := args.next()
 		nextArgs.d = reflect.New(t.Elem()).Elem()
 		nextArgs.s = iter.Value()
-		deepCopy(nextArgs)
+		if err := deepCopy(nextArgs); err != nil {
+			return err
+		}
 		d.SetMapIndex(iter.Key(), nextArgs.d)
 	}
+	return nil
 }
 
-func sliceHandler(args *deepCopyArgs) {
+func sliceHandler(args *deepCopyArgs) error {
 	d := args.d
 	s := args.s
 	t := d.Type()
@@ -170,17 +179,20 @@ func sliceHandler(args *deepCopyArgs) {
 	sk := s.Type().Elem().Kind()
 	if dk == reflect.Uint8 && sk == reflect.Uint8 {
 		d.SetBytes(s.Bytes())
-		return
+		return nil
 	}
 	for i := 0; i < len; i++ {
 		nextArgs := args.next()
 		nextArgs.d = d.Index(i)
 		nextArgs.s = s.Index(i)
-		deepCopy(nextArgs)
+		if err := deepCopy(nextArgs); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func arrayHandler(args *deepCopyArgs) {
+func arrayHandler(args *deepCopyArgs) error {
 	d := args.d
 	s := args.s
 	len := d.Len()
@@ -191,6 +203,9 @@ func arrayHandler(args *deepCopyArgs) {
 		nextArgs := args.next()
 		nextArgs.d = d.Index(i)
 		nextArgs.s = s.Index(i)
-		deepCopy(nextArgs)
+		if err := deepCopy(nextArgs); err != nil {
+			return err
+		}
 	}
+	return nil
 }
