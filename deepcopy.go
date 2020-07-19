@@ -28,7 +28,7 @@ import (
 )
 
 // DeepCopy recursively copies data from src to dst.
-func DeepCopy(dst interface{}, src interface{}, flags ...Flags) {
+func DeepCopy(dst interface{}, src interface{}, flags ...Flags) error {
 	args := deepCopyArgs{
 		d:       reflect.ValueOf(dst),
 		s:       reflect.ValueOf(src),
@@ -36,10 +36,10 @@ func DeepCopy(dst interface{}, src interface{}, flags ...Flags) {
 		level:   0,
 		visited: &map[uintptr]reflect.Value{},
 	}
-	deepCopy(&args)
+	return deepCopy(&args)
 }
 
-func deepCopy(args *deepCopyArgs) {
+func deepCopy(args *deepCopyArgs) error {
 
 	args.resolve()
 	d := args.d
@@ -47,14 +47,14 @@ func deepCopy(args *deepCopyArgs) {
 	flags := args.flags
 
 	if !canCopy(d, s) {
-		return
+		return nil
 	}
 
 	if s.CanAddr() && flags.Has(FPreserveHierarchy) {
 		addr := s.UnsafeAddr()
 		if value, ok := (*args.visited)[addr]; ok {
 			d.Set(value)
-			return
+			return nil
 		}
 	}
 
@@ -116,10 +116,12 @@ func deepCopy(args *deepCopyArgs) {
 		}
 
 	default: // Invalid
-		panic(fmt.Sprintf("unhandled type: %s", k))
+		return fmt.Errorf("unhandled type: %s", k)
 	}
 
 	args.recordVisited()
+
+	return nil
 }
 
 func structHandler(args *deepCopyArgs) {
