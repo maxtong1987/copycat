@@ -25,16 +25,8 @@ func (args *deepCopyArgs) next() *deepCopyArgs {
 	return &nextArgs
 }
 
-func (args *deepCopyArgs) recordVisited() {
-	s := args.s
-	d := args.d
-	flags := args.flags
-	visited := *args.visited
-	if !flags.Has(FPreserveHierarchy) || !s.CanAddr() {
-		return
-	}
-	addr := s.UnsafeAddr()
-	visited[addr] = d
+func (args *deepCopyArgs) recordVisited(addr uintptr) {
+	(*args.visited)[addr] = args.d
 }
 
 func resolveDst(v reflect.Value, flags Flags) reflect.Value {

@@ -51,13 +51,13 @@ func deepCopy(args *deepCopyArgs) error {
 	}
 
 	if flags.Has(FPreserveHierarchy) {
-		defer args.recordVisited()
 		if s.CanAddr() {
 			addr := s.UnsafeAddr()
 			if value, ok := (*args.visited)[addr]; ok {
 				d.Set(value)
 				return nil
 			}
+			defer args.recordVisited(addr)
 		}
 	}
 
