@@ -52,9 +52,7 @@ func resolveDst(v reflect.Value, flags Flags) reflect.Value {
 
 func resolveSrc(v reflect.Value, flags Flags) reflect.Value {
 	switch k := v.Kind(); k {
-	case reflect.Ptr:
-		return resolveSrc(v.Elem(), flags)
-	case reflect.Interface:
+	case reflect.Ptr, reflect.Interface:
 		return resolveSrc(v.Elem(), flags)
 	default:
 		return v
