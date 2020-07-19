@@ -27,6 +27,9 @@ import (
 	"reflect"
 )
 
+// MaxLevel maximum level that DeepCopy can dive into recurstively
+const MaxLevel uint = 256
+
 // DeepCopy recursively copies data from src to dst.
 func DeepCopy(dst interface{}, src interface{}, flags ...Flags) error {
 	args := deepCopyArgs{
@@ -34,12 +37,16 @@ func DeepCopy(dst interface{}, src interface{}, flags ...Flags) error {
 		s:       reflect.ValueOf(src),
 		flags:   combineFlags(flags...),
 		level:   0,
-		visited: &map[uintptr]reflect.Value{},
+		visited: &map[visitedAddr]reflect.Value{},
 	}
 	return deepCopy(&args)
 }
 
 func deepCopy(args *deepCopyArgs) error {
+
+	if args.level >= MaxLevel {
+		return fmt.Errorf("Reach maximum level of depth %v", MaxLevel)
+	}
 
 	args.resolve()
 	d := args.d
@@ -52,12 +59,15 @@ func deepCopy(args *deepCopyArgs) error {
 
 	if flags.Has(FPreserveHierarchy) {
 		if s.CanAddr() {
-			addr := s.UnsafeAddr()
+			addr := visitedAddr{
+				a: s.UnsafeAddr(),
+				t: s.Type(),
+			}
 			if value, ok := (*args.visited)[addr]; ok {
 				d.Set(value)
 				return nil
 			}
-			defer args.recordVisited(addr)
+			args.recordVisited(addr)
 		}
 	}
 

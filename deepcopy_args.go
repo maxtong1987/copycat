@@ -4,12 +4,17 @@ import (
 	"reflect"
 )
 
+type visitedAddr struct {
+	a uintptr
+	t reflect.Type
+}
+
 type deepCopyArgs struct {
 	d       reflect.Value
 	s       reflect.Value
 	flags   Flags
 	level   uint
-	visited *map[uintptr]reflect.Value
+	visited *map[visitedAddr]reflect.Value
 }
 
 func (args *deepCopyArgs) resolve() *deepCopyArgs {
@@ -25,7 +30,7 @@ func (args *deepCopyArgs) next() *deepCopyArgs {
 	return &nextArgs
 }
 
-func (args *deepCopyArgs) recordVisited(addr uintptr) {
+func (args *deepCopyArgs) recordVisited(addr visitedAddr) {
 	(*args.visited)[addr] = args.d
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 	"unsafe"
 )
 
@@ -34,6 +35,8 @@ func TestDeepCopy(t *testing.T) {
 	testSpecialType(t)
 
 	testCombo(t)
+
+	testSelfReferencing(t)
 }
 
 func BenchmarkDeepCopy_simple(b *testing.B) {
@@ -79,6 +82,7 @@ type simple struct {
 	J float32
 	K float64
 	L bool
+	U string
 }
 
 func newSimple() *simple {
@@ -95,6 +99,7 @@ func newSimple() *simple {
 		J: J,
 		K: K,
 		L: L,
+		U: U,
 	}
 }
 
@@ -245,6 +250,7 @@ var (
 	Q = func() { fmt.Sprintln("Hello!") }
 	R = fooBarImpl{}
 	S = unsafe.Pointer(nil)
+	U = "this is another string"
 )
 
 func testSimple(t *testing.T) {
@@ -826,5 +832,43 @@ func testCombo(t *testing.T) {
 
 	if !reflect.DeepEqual(*dst, expect) {
 		t.Errorf("dst != expect\ndst:\n%+v\nexpected:\n%+v", *dst, expect)
+	}
+}
+
+func testSelfReferencing(t *testing.T) {
+	type selfReference struct {
+		Me   simple
+		Next *selfReference
+	}
+	src := &selfReference{
+		Me: *newSimple(),
+	}
+	src.Next = src
+	expect := selfReference{
+		Me: *newSimple(),
+	}
+	expect.Next = &expect
+
+	dst := &selfReference{}
+	fmt.Println("case: self-referencing struct")
+
+	timeout := make(chan struct{})
+	go func() {
+		time.Sleep(time.Second * 2)
+		timeout <- struct{}{}
+	}()
+	done := make(chan struct{})
+	go func() {
+		DeepCopy(dst, src, FPreserveHierarchy)
+		done <- struct{}{}
+	}()
+
+	select {
+	case <-done:
+		if !reflect.DeepEqual(*dst, expect) {
+			t.Errorf("dst != expect\ndst:\n%+v\nexpected:\n%+v", *dst, expect)
+		}
+	case <-timeout:
+		t.Errorf("timeout")
 	}
 }
