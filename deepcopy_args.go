@@ -10,11 +10,12 @@ type visitedAddr struct {
 }
 
 type deepCopyArgs struct {
-	d       reflect.Value
-	s       reflect.Value
-	flags   Flags
-	level   uint
-	visited *map[visitedAddr]reflect.Value
+	d        reflect.Value
+	s        reflect.Value
+	flags    Flags
+	level    uint
+	maxLevel uint
+	visited  *map[visitedAddr]reflect.Value
 }
 
 func (args *deepCopyArgs) resolve() *deepCopyArgs {

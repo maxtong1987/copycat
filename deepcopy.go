@@ -27,25 +27,26 @@ import (
 	"reflect"
 )
 
-// MaxLevel maximum level that DeepCopy can dive into recurstively
-const MaxLevel uint = 256
+// DefaultMaxLevel default numbers of copy level
+const DefaultMaxLevel uint = 256
 
 // DeepCopy recursively copies data from src to dst.
 func DeepCopy(dst interface{}, src interface{}, flags ...Flags) error {
 	args := deepCopyArgs{
-		d:       reflect.ValueOf(dst),
-		s:       reflect.ValueOf(src),
-		flags:   combineFlags(flags...),
-		level:   0,
-		visited: &map[visitedAddr]reflect.Value{},
+		d:        reflect.ValueOf(dst),
+		s:        reflect.ValueOf(src),
+		flags:    combineFlags(flags...),
+		level:    0,
+		maxLevel: DefaultMaxLevel,
+		visited:  &map[visitedAddr]reflect.Value{},
 	}
 	return deepCopy(&args)
 }
 
 func deepCopy(args *deepCopyArgs) error {
 
-	if args.level >= MaxLevel {
-		return fmt.Errorf("Reach maximum level of depth %v", MaxLevel)
+	if args.level >= args.maxLevel {
+		return fmt.Errorf("Reach maximum level of depth %v", args.maxLevel)
 	}
 
 	args.resolve()
