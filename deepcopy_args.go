@@ -36,23 +36,25 @@ func (args *deepCopyArgs) recordVisited(addr visitedAddr) {
 }
 
 func resolveDst(v reflect.Value, flags Flags) reflect.Value {
-	switch v.Kind() {
-	case reflect.Ptr:
-		if v.IsValid() && v.IsNil() {
+	for {
+		if v.Kind() != reflect.Ptr {
+			return v
+		}
+		if v.IsNil() && v.CanSet() {
 			ptr := reflect.New(v.Type().Elem())
 			v.Set(ptr)
 		}
-		return resolveDst(v.Elem(), flags)
-	default:
-		return v
+		v = v.Elem()
 	}
 }
 
 func resolveSrc(v reflect.Value, flags Flags) reflect.Value {
-	switch k := v.Kind(); k {
-	case reflect.Ptr, reflect.Interface:
-		return resolveSrc(v.Elem(), flags)
-	default:
-		return v
+	for {
+		switch k := v.Kind(); k {
+		case reflect.Ptr, reflect.Interface:
+			v = v.Elem()
+		default:
+			return v
+		}
 	}
 }

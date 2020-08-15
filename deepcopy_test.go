@@ -37,6 +37,8 @@ func TestDeepCopy(t *testing.T) {
 	testCombo(t)
 
 	testSelfReferencing(t)
+
+	testPrivate(t)
 }
 
 func BenchmarkDeepCopy_simple(b *testing.B) {
@@ -870,5 +872,29 @@ func testSelfReferencing(t *testing.T) {
 		}
 	case <-timeout:
 		t.Errorf("timeout")
+	}
+}
+
+func testPrivate(t *testing.T) {
+	type privateStruct struct {
+		A string
+		a string
+		b *string
+	}
+	b := "b"
+	src := &privateStruct{
+		A: "A",
+		a: "a",
+		b: &b,
+	}
+	expect := privateStruct{
+		A: "A",
+	}
+	dst := &privateStruct{}
+	fmt.Println("case: private variables")
+	DeepCopy(dst, src)
+
+	if !reflect.DeepEqual(*dst, expect) {
+		t.Errorf("dst != expect\ndst:\n%+v\nexpected:\n%+v", *dst, expect)
 	}
 }
