@@ -27,49 +27,36 @@ import (
 	"reflect"
 )
 
-// DefaultMaxLevel default numbers of copy level
-const DefaultMaxLevel uint = 256
-
 // DeepCopy recursively copies data from src to dst.
-func DeepCopy(dst interface{}, src interface{}, flags ...Flags) error {
+func DeepCopy(dst interface{}, src interface{}) error {
 	args := deepCopyArgs{
-		d:        reflect.ValueOf(dst),
-		s:        reflect.ValueOf(src),
-		flags:    combineFlags(flags...),
-		level:    0,
-		maxLevel: DefaultMaxLevel,
-		visited:  &map[visitedAddr]reflect.Value{},
+		d:       reflect.ValueOf(dst),
+		s:       reflect.ValueOf(src),
+		visited: &map[visitedAddr]reflect.Value{},
 	}
 	return deepCopy(&args)
 }
 
 func deepCopy(args *deepCopyArgs) error {
 
-	if args.level >= args.maxLevel {
-		return fmt.Errorf("Reach maximum level of depth %v", args.maxLevel)
-	}
-
 	args.resolve()
 	d := args.d
 	s := args.s
-	flags := args.flags
 
 	if !canCopy(d, s) {
 		return nil
 	}
 
-	if flags.Has(FPreserveHierarchy) {
-		if s.CanAddr() {
-			addr := visitedAddr{
-				a: s.UnsafeAddr(),
-				t: s.Type(),
-			}
-			if value, ok := (*args.visited)[addr]; ok {
-				d.Set(value)
-				return nil
-			}
-			args.recordVisited(addr)
+	if s.CanAddr() {
+		addr := visitedAddr{
+			a: s.UnsafeAddr(),
+			t: s.Type(),
 		}
+		if value, ok := (*args.visited)[addr]; ok {
+			d.Set(value)
+			return nil
+		}
+		args.recordVisited(addr)
 	}
 
 	switch k := d.Kind(); k {
@@ -104,30 +91,8 @@ func deepCopy(args *deepCopyArgs) error {
 	case reflect.Slice:
 		return sliceHandler(args)
 
-	case reflect.Chan:
-		if flags.Has(FCopyChan) {
-			d.Set(s)
-		}
-
-	case reflect.Func:
-		if flags.Has(FCopyFunc) {
-			d.Set(s)
-		}
-
-	case reflect.Uintptr:
-		if flags.Has(FCopyUintptr) {
-			d.Set(s)
-		}
-
-	case reflect.UnsafePointer:
-		if flags.Has(FCopyUnsafePointer) {
-			d.Set(s)
-		}
-
-	case reflect.Interface:
-		if flags.Has(FCopyInterface) {
-			d.Set(s)
-		}
+	case reflect.Chan, reflect.Func, reflect.Uintptr, reflect.UnsafePointer, reflect.Interface:
+		return nil
 
 	default: // Invalid
 		return fmt.Errorf("unhandled type: %s", k)

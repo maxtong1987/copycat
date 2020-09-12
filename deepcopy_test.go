@@ -30,9 +30,7 @@ func TestDeepCopy(t *testing.T) {
 
 	testDoublePointer(t)
 
-	testFlagsPreserveHierarchy(t)
-
-	testSpecialType(t)
+	testPreserveHierarchy(t)
 
 	testCombo(t)
 
@@ -63,11 +61,10 @@ func benchmarkDeepCopy(
 	b *testing.B,
 	newDst func() interface{},
 	src interface{},
-	flags ...Flags,
 ) {
 	for n := 0; n < b.N; n++ {
 		dst := newDst()
-		DeepCopy(dst, src, flags...)
+		DeepCopy(dst, src)
 	}
 }
 
@@ -594,7 +591,7 @@ func testDoublePointer(t *testing.T) {
 	}
 }
 
-func testFlagsPreserveHierarchy(t *testing.T) {
+func testPreserveHierarchy(t *testing.T) {
 	type node struct {
 		Name     string
 		Children []*node
@@ -612,9 +609,9 @@ func testFlagsPreserveHierarchy(t *testing.T) {
 	src := nodeA
 	dst := &node{}
 
-	fmt.Println("case: flags - FPreserveHierarchy")
+	fmt.Println("case: PreserveHierarchy")
 
-	DeepCopy(dst, src, FPreserveHierarchy)
+	DeepCopy(dst, src)
 
 	childrenA := dst.Children
 	if len(childrenA) != 2 {
@@ -659,67 +656,6 @@ func testFlagsPreserveHierarchy(t *testing.T) {
 	if !reflect.DeepEqual(CChildren[0], dstD) {
 		t.Errorf("CChildren[0] != dstD: %v  %v", *CChildren[0], *dstD)
 		return
-	}
-}
-
-func testSpecialType(t *testing.T) {
-	src := specialType{
-		O: O,
-		P: P,
-		Q: Q,
-		R: R,
-		S: S,
-	}
-
-	type testCase struct {
-		description string
-		expect      specialType
-		flags       Flags
-	}
-
-	cases := []testCase{
-		{
-			description: "FCopyUintptr",
-			expect:      specialType{O: O},
-			flags:       FCopyUintptr,
-		},
-		{
-			description: "FCopyChan",
-			expect:      specialType{P: P},
-			flags:       FCopyChan,
-		},
-		{
-			description: "FCopyFunc",
-			expect:      specialType{Q: Q},
-			flags:       FCopyFunc,
-		},
-		{
-			description: "FCopyInterface",
-			expect:      specialType{R: R},
-			flags:       FCopyInterface,
-		},
-		{
-			description: "FCopyUnsafePointer",
-			expect:      specialType{S: S},
-			flags:       FCopyUnsafePointer,
-		},
-		{
-			description: "FCopyUintptr | FCopyChan | FCopyFunc | FCopyInterface | FCopyUnsafePointer",
-			expect:      specialType{O: O, P: P, Q: Q, R: R, S: S},
-			flags:       FCopyUintptr | FCopyChan | FCopyFunc | FCopyInterface | FCopyUnsafePointer,
-		},
-	}
-
-	for _, testCase := range cases {
-		fmt.Printf("%s:\n", testCase.description)
-		dst := &specialType{}
-		expect := testCase.expect
-		DeepCopy(dst, src, testCase.flags)
-		strDst := fmt.Sprintf("%+v", *dst)
-		strExpect := fmt.Sprintf("%+v", expect)
-		if !reflect.DeepEqual(*dst, expect) && strDst != strExpect {
-			t.Errorf("dst != expect\ndst:\n%+v\nexpected:\n%+v", *dst, expect)
-		}
 	}
 }
 
@@ -861,7 +797,7 @@ func testSelfReferencing(t *testing.T) {
 	}()
 	done := make(chan struct{})
 	go func() {
-		DeepCopy(dst, src, FPreserveHierarchy)
+		DeepCopy(dst, src)
 		done <- struct{}{}
 	}()
 
