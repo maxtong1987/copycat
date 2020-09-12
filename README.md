@@ -1,4 +1,5 @@
 # copycat
+[![Coverage Status](https://coveralls.io/repos/github/maxtong1987/copycat/badge.svg?branch=master)](https://coveralls.io/github/maxtong1987/copycat?branch=master)
 
 Recursively perform deep copy from source (src) to destination (dst) using reflection.
 
