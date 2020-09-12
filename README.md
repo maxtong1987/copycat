@@ -1,5 +1,5 @@
 # copycat
-[![GoDoc](https://godoc.org/github.com/maxtong1987/copycat?status.svg)](https://godoc.org/github.com/maxtong1987/copycat)
+[![GoDoc](https://godoc.org/github.com/maxtong1987/copycat?status.svg)](https://pkg.go.dev/github.com/maxtong1987/copycat)
 [![<CircleCI>](https://circleci.com/gh/maxtong1987/copycat.svg?style=svg)](https://app.circleci.com/pipelines/github/maxtong1987/copycat?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/maxtong1987/copycat/badge.svg?branch=master)](https://coveralls.io/github/maxtong1987/copycat?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/maxtong1987/copycat)](https://goreportcard.com/report/github.com/maxtong1987/copycat)
