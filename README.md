@@ -1,5 +1,6 @@
 # copycat
 [![Coverage Status](https://coveralls.io/repos/github/maxtong1987/copycat/badge.svg?branch=master)](https://coveralls.io/github/maxtong1987/copycat?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/maxtong1987/copycat)](https://goreportcard.com/report/github.com/maxtong1987/copycat)
 
 Recursively perform deep copy from source (src) to destination (dst) using reflection.
 
