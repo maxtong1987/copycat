@@ -6,12 +6,12 @@ Recursively perform deep copy from source (src) to destination (dst) using refle
 
 To get the package, execute:
 ```sh
-go get gitlab.com/maxtong/copycat
+go get github.com/maxtong1987/copycat
 ```
 
 To import the package, add the following line to your code:
 ```go
-import "gitlab.com/maxtong/copycat"
+import "github.com/maxtong1987/copycat"
 ```
 
 ## Example
@@ -21,7 +21,7 @@ package main
 import (
 	"fmt"
 
-	"gitlab.com/maxtong/copycat"
+	"github.com/maxtong1987/copycat"
 )
 
 type subType struct {
