@@ -26,7 +26,7 @@ func TestDeepCopy(t *testing.T) {
 
 	testArrayToSlice(t)
 
-	testPointerToConcret(t)
+	testPointerToConcrete(t)
 
 	testDoublePointer(t)
 
@@ -495,7 +495,7 @@ func testArrayToSlice(t *testing.T) {
 	}
 }
 
-func testPointerToConcret(t *testing.T) {
+func testPointerToConcrete(t *testing.T) {
 	src := &advancePointer{
 		A: &A,
 		B: &B,
@@ -583,7 +583,7 @@ func testDoublePointer(t *testing.T) {
 		L: L,
 	}
 
-	fmt.Println("case: double pointer to concret")
+	fmt.Println("case: double pointer to concrete")
 	DeepCopy(dst, src)
 
 	if !reflect.DeepEqual(*dst, expect) {
