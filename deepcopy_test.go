@@ -37,6 +37,8 @@ func TestDeepCopy(t *testing.T) {
 	testSelfReferencing(t)
 
 	testPrivate(t)
+
+	testSpecial(t)
 }
 
 func BenchmarkDeepCopy_simple(b *testing.B) {
@@ -830,6 +832,33 @@ func testPrivate(t *testing.T) {
 	}
 	dst := &privateStruct{}
 	fmt.Println("case: private variables")
+	DeepCopy(dst, src)
+
+	if !reflect.DeepEqual(*dst, expect) {
+		t.Errorf("dst != expect\ndst:\n%+v\nexpected:\n%+v", *dst, expect)
+	}
+}
+
+func testSpecial(t *testing.T) {
+	newSpecial := func() *special {
+		return &special{
+			M: M,
+			N: N,
+			O: O,
+			P: P,
+			Q: Q,
+			R: R,
+			S: S,
+		}
+	}
+
+	src := newSpecial()
+	expect := special{
+		M: M,
+		N: N,
+	}
+	dst := &special{}
+	fmt.Println("case: special types")
 	DeepCopy(dst, src)
 
 	if !reflect.DeepEqual(*dst, expect) {
