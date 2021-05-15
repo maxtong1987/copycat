@@ -102,6 +102,16 @@ func newSimple() *simple {
 	}
 }
 
+type special struct {
+	M complex64
+	N complex128
+	O uintptr
+	P chan struct{}
+	Q func()
+	R fooBar
+	S unsafe.Pointer
+}
+
 type advanceSlice struct {
 	A []string
 	B []int8
@@ -220,16 +230,6 @@ type fooBarImpl struct{}
 
 func (fooBarImpl) Foo() {}
 func (fooBarImpl) Bar() {}
-
-type specialType struct {
-	M complex64
-	N complex128
-	O uintptr
-	P chan struct{}
-	Q func()
-	R fooBar
-	S unsafe.Pointer
-}
 
 var (
 	A = "this is a string"
