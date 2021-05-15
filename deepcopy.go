@@ -110,15 +110,6 @@ func structHandler(args *deepCopyArgs) error {
 			return err
 		}
 	}
-	for i, num := 0, t.NumMethod(); i < num; i++ {
-		m := t.Method(i)
-		nextArgs := args.next()
-		nextArgs.d = d.Method(i)
-		nextArgs.s = s.MethodByName(m.Name)
-		if err := deepCopy(nextArgs); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
