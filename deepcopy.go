@@ -23,7 +23,6 @@ SOFTWARE.
 package copycat
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -93,9 +92,6 @@ func deepCopy(args *deepCopyArgs) error {
 
 	case reflect.Chan, reflect.Func, reflect.Uintptr, reflect.UnsafePointer, reflect.Interface:
 		return nil
-
-	default: // Invalid
-		return fmt.Errorf("unhandled type: %s", k)
 	}
 
 	return nil
