@@ -244,6 +244,8 @@ var (
 	J = float32(1.11)
 	K = float64(2.22)
 	L = true
+	M = complex64(64)
+	N = complex128(128)
 	O = uintptr(0)
 	P = make(chan struct{})
 	Q = func() { fmt.Sprintln("Hello!") }
